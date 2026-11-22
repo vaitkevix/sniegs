@@ -159,7 +159,7 @@ button{cursor:pointer}
 'use strict';
 /* Lietotnes iestatījumi */
 const APP = {"svc": "sniegs", "mode": "snow", "name": "Sniega tīrīšana", "acc": "lilac", "unit": "adr.", "qtyL": "", "qtyPh": "", "doneL": "Notīrīts", "doneBtn": "Notīrīts", "lower": "tīrīšana", "weather": ["snow"], "wxL": "", "maxInt": 1, "notice": false, "veidiObj": false, "actL": "Tīrīt sniegu šajā objektā", "notePh": "Piem. sniegu krāt pie žoga, ne uz zāliena", "objHelp": "Iestatiet katram objektam traktoristu (vai SIA) un secību maršrutā. Pēc sniega prognozes izveidojas izsaukums.", "whys": ["Aizstāvēts", "Nav piekļuves", "Tehnika", "Cits"], "cantDone": "Atzīmēts — vadītājs redzēs"};
-const API = 'https://aizvietosana-api.vaitkevix.workers.dev/' + APP.svc, IMG = 'https://aizvietosana-api.vaitkevix.workers.dev/img?sz=w400&id=';
+const API = 'https://vaitkevix.cloud/sh/api/' + APP.svc, IMG = 'https://vaitkevix.cloud/sh/api/img?sz=w400&id=';
 const SNOW = APP.mode === 'snow', PINK = 'shd_pin';
 const $ = (id) => document.getElementById(id);
 const esc = (s) => String(s == null ? '' : s).replace(/[&<>"']/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]));
