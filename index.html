@@ -155,6 +155,7 @@ button,.chip,.tab{-webkit-user-select:none;user-select:none;touch-action:manipul
   <header class="top">
     <span class="lg" aria-hidden="true"><svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M5 17V10h7l2 3h5v4"/><path d="M12 10V6h3l2 7"/><circle cx="8" cy="17.5" r="2"/><circle cx="16.5" cy="17.5" r="2"/><path d="M10 17.5h4.5"/><path d="M2.5 9.5v9"/></svg></span>
     <div class="t"><b class="bn">Sniega tīrīšana</b><small id="hdSub">Traktoristu maršruti</small></div>
+    <button class="ib" id="btnHelp" aria-label="Palīdzība un pamācība" title="Palīdzība un pamācība"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M9.5 9a2.5 2.5 0 1 1 3.5 2.3c-.6.3-1 .9-1 1.6V14M12 17.5h.01"/></svg></button>
     <button class="ib" id="btnTheme" aria-label="Tumšais režīms"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M20 14.5A8 8 0 0 1 9.5 4a8 8 0 1 0 10.5 10.5z"/></svg></button>
     <button class="ib" id="btnRefresh" aria-label="Atjaunot"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M20 11a8 8 0 1 0-2.3 5.7"/><path d="M20 4v7h-7"/></svg></button>
     <button class="ib dk" id="btnMe" aria-label="Profils">··</button>
@@ -268,7 +269,7 @@ async function load() {
   $('vGate').hidden = true; $('vApp').hidden = false; $('tabs').hidden = false;
   $('hdSub').textContent = r.me.name + ' · ' + (ROLE[r.me.role] || r.me.role);
   $('btnMe').textContent = r.me.name.replace(/^SIA\s+/i, '').split(/\s+/).map(x => x[0]).join('').slice(0, 2).toUpperCase();
-  drawTabs(); if (S.tab === 'month') S.month = null; draw(); offBar();
+  drawTabs(); if (S.tab === 'month') S.month = null; draw(); offBar(); if (window.SHXR && !S.tq) { S.tq = 1; SHXR.maybeTour(); }
 }
 function drawTabs() {
   const T = [['today', SNOW ? 'Maršruts' : 'Šodien'], ['month', SNOW ? 'Izsaukumi' : 'Grafiks'], ['objs', 'Objekti'], ['map', 'Karte']].concat(can('admin') ? [['rules', 'Noteikumi']] : []);
@@ -651,10 +652,61 @@ function drawRules(v) {
     else showGate(err.message); });
   first().then(() => flushQ()).catch(() => 0);
   /* Atjaunojas pati: atgriežoties lietotnē (>60 s) un ik 2 min, kamēr nav atvērts logs */
-  let last = Date.now(); const auto = () => { if (!S.D || $('sheetBg') || document.hidden || Date.now() - last < 60000) return; last = Date.now(); load().catch(() => 0); };
+  let last = Date.now(); const auto = () => { if (!S.D || $('sheetBg') || $('tourOv') || document.hidden || Date.now() - last < 60000) return; last = Date.now(); load().catch(() => 0); };
   document.addEventListener('visibilitychange', auto); setInterval(auto, 120000);
   addEventListener('online', () => { last = 0; flushQ(); auto(); }); setInterval(() => { if (S.qn) flushQ(); }, 60000);
 })();
+</script>
+<style>/* «?» poga galvenē: šaurā telefonā mazāka atstarpe */@media(max-width:420px){.top{gap:8px}}
+/* palīga izvēlne lieto lietotnes krāsas (arī tumšajā režīmā) */.shx-sheet{--surface-solid:var(--surf);--line:var(--surf2);--ink-2:var(--ink2);--ink-3:var(--ink3)}</style>
+<script>
+/* SH palīgs (sh-addon.js): izvēlne «?», pamācība pa lomām, pievienot sākuma ekrānam. Ieeja — lietotnes pašas (portāla sesija / PIN). © VAITKEVIX, SIA */
+window.SHX = { app: 'sniegs', external: true, a2hs: true,
+  getUser: function () { return S.D && S.D.me ? { name: S.D.me.name, kind: S.D.me.role } : null; },
+  homeTab: function () { return 'today'; },
+  switchTab: function (t) { if (S.tab !== t) { S.tab = t; drawTabs(); draw(); scrollTo(0, 0); } },
+  tours: {
+    izpilditajs: [
+      {"title": "Sveiki!", "text": "Īsa pamācība traktoristam. Aizņems pusminūti."},
+      {"sel": "#view .wxrow", "tab": "today", "title": "Prognoze", "text": "Sniegs nākamajās dienās. Iekrāsotās dienas — gaidāma tīrīšana."},
+      {"sel": "#view .call", "tab": "today", "title": "Izsaukums", "text": "Kad vadītājs apstiprina izsaukumu, šeit parādās jūsu maršruts."},
+      {"sel": "#view .crew .stop, #view .crew", "tab": "today", "title": "Jūsu maršruts", "text": "Uzspiediet adresi un «Sākt tīrīt». Kad gatavs — bilde un «Notīrīts»."},
+      {"sel": "#tabs [data-t=\"map\"]", "title": "Karte", "text": "Maršruta adreses kartē."},
+      {"sel": "#btnHelp", "title": "Palīdzība", "text": "Šeit atkal atradīsiet pamācību un pievienošanu sākuma ekrānam. Veiksmīgu darbu!"}
+    ],
+    vaditajs: [
+      {"title": "Sveiki!", "text": "Īsa pamācība vadītājam. Aizņems pusminūti."},
+      {"sel": "#view .wxrow", "tab": "today", "title": "Prognoze", "text": "Sniegs nākamajās dienās. Iekrāsotās dienas — gaidāma tīrīšana."},
+      {"sel": "#cOk, #view .call", "tab": "today", "title": "Izsaukums", "text": "Pēc prognozes izsaukums izveidojas pats. Apstipriniet vai atceliet — tikai tad traktoristi saņem maršrutus."},
+      {"sel": "#cNow", "tab": "today", "title": "Izsaukt ar pogu", "text": "Uzsniga negaidīti? Izsauciet tīrīšanu šodien visiem objektiem."},
+      {"sel": "#btnReq", "tab": "today", "title": "Pieteikums", "text": "Vienai adresei — ietves, jumts, lāstekas. Atzīmējiet, ja steidzami."},
+      {"sel": "#tabs [data-t=\"month\"]", "title": "Izsaukumi", "text": "Visi izsaukumi un atskaite: stundas, kaisīšana, kravas."},
+      {"sel": "#btnHelp", "title": "Palīdzība", "text": "Šeit atkal atradīsiet pamācību un pievienošanu sākuma ekrānam. Veiksmīgu darbu!"}
+    ],
+    admin: [
+      {"title": "Sveiki!", "text": "Īsa pamācība administratoram. Aizņems pusminūti."},
+      {"sel": "#view .wxrow", "tab": "today", "title": "Prognoze", "text": "Sniegs nākamajās dienās. Iekrāsotās dienas — gaidāma tīrīšana."},
+      {"sel": "#cOk, #view .call", "tab": "today", "title": "Izsaukums", "text": "Pēc prognozes izsaukums izveidojas pats. Apstipriniet vai atceliet — tikai tad traktoristi saņem maršrutus."},
+      {"sel": "#cNow", "tab": "today", "title": "Izsaukt ar pogu", "text": "Uzsniga negaidīti? Izsauciet tīrīšanu šodien visiem objektiem."},
+      {"sel": "#tabs [data-t=\"objs\"]", "title": "Objekti", "text": "Katram objektam traktorists un secība maršrutā."},
+      {"sel": "#tabs [data-t=\"rules\"]", "title": "Noteikumi", "text": "Cik cm sniega izsaukt, automātiskie izsaukumi un apstiprināšana."},
+      {"sel": "#btnHelp", "title": "Palīdzība", "text": "Šeit atkal atradīsiet pamācību un pievienošanu sākuma ekrānam. Veiksmīgu darbu!"}
+    ],
+    skatitajs: [
+      {"title": "Sveiki!", "text": "Īsa pamācība par sniega tīrīšanu. Aizņems pusminūti."},
+      {"sel": "#view .wxrow", "tab": "today", "title": "Prognoze", "text": "Sniegs nākamajās dienās. Iekrāsotās dienas — gaidāma tīrīšana."},
+      {"sel": "#view .call", "tab": "today", "title": "Izsaukums", "text": "Pašreizējais izsaukums un cik adreses jau notīrītas."},
+      {"sel": "#view .crew .stop, #view .crew", "tab": "today", "title": "Maršruti", "text": "Adreses pa traktoristiem. Uzspiediet, lai redzētu bildes."},
+      {"sel": "#tabs [data-t=\"month\"]", "title": "Izsaukumi", "text": "Visi izsaukumi pēc kārtas."},
+      {"sel": "#btnHelp", "title": "Palīdzība", "text": "Šeit atkal atradīsiet pamācību un pievienošanu sākuma ekrānam. Veiksmīgu darbu!"}
+    ]
+  }
+};
+</script>
+<script src="sh-addon.js?v=3"></script>
+<script>
+document.getElementById('btnHelp').onclick = function () { if (window.SHXR) SHXR.openSheet(); };
+if (S.D) { if (window.SHXR && !S.tq) { S.tq = 1; SHXR.maybeTour(); } }
 </script>
 <script src="https://vaitkevix.cloud/sh/api/apv.js" defer></script><!-- apvienotie objekti → «Apvienots» (no Mājas lietas) -->
 
